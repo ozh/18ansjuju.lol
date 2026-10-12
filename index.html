@@ -180,6 +180,30 @@
   }
   #gate.gone { animation: gateOut .6s cubic-bezier(.6,-0.4,.7,0) forwards; pointer-events: none; }
 
+  /* ---------- écran de fin ---------- */
+  #end {
+    position: fixed; inset: 0; z-index: 50;
+    display: none; flex-direction: column; align-items: center; justify-content: center; gap: 4vh;
+    background: radial-gradient(circle, rgba(26,0,16,.92) 0%, rgba(0,0,0,.96) 70%);
+    text-align: center; padding: 2rem;
+  }
+  #end.on { display: flex; animation: endIn .5s cubic-bezier(.2,1.4,.4,1) both; }
+  #end h1 { transform: rotate(-2deg); }
+  #end a {
+    font-size: clamp(1.1rem, 3vw, 1.8rem); color: var(--cyan);
+    text-transform: uppercase; letter-spacing: .08em;
+    text-decoration: none; border-bottom: 3px solid var(--cyan);
+  }
+  #end a:hover { color: var(--yellow); border-color: var(--yellow); }
+  #end button {
+    font: inherit; font-size: clamp(1.3rem, 4vw, 2.4rem);
+    background: var(--pink); color: #fff; cursor: pointer;
+    border: 5px solid #000; padding: .3em 1.2em;
+    box-shadow: 8px 8px 0 var(--yellow), 0 0 40px var(--pink);
+    text-transform: uppercase; letter-spacing: .08em;
+    animation: wiggle .4s ease-in-out infinite alternate;
+  }
+
   /* ---------- animations ---------- */
   @keyframes spin { to { transform: rotate(360deg); } }
   @keyframes flash { from { opacity: 1; } to { opacity: 0; } }
@@ -213,6 +237,7 @@
   @keyframes marquee { from { transform: translateX(0); } to { transform: translateX(-50%); } }
   @keyframes pulse { 50% { transform: scale(1.06) rotate(3deg); } }
   @keyframes wiggle { from { transform: rotate(-3deg) scale(1); } to { transform: rotate(3deg) scale(1.06); } }
+  @keyframes endIn { from { transform: scale(.3) rotate(-10deg); opacity: 0; } }
   @keyframes gateOut { to { transform: scale(3) rotate(10deg); opacity: 0; } }
 
   @media (max-width: 700px) {
@@ -252,7 +277,13 @@
   <button type="button">🤘 Branche l'ampli 🤘</button>
 </div>
 
-<audio id="song" src="MAJEURE-METAL.mp3" loop preload="auto"></audio>
+<div id="end">
+  <h1 data-text="MAJEURE METAL">MAJEURE METAL</h1>
+  <a href="https://suno.com/s/dsv1Xejr9gwifK0A" target="_blank" rel="noopener">🎸 Musique et paroles 🎸</a>
+  <button type="button">🤘 Play again 🤘</button>
+</div>
+
+<audio id="song" src="MAJEURE-METAL.mp3" preload="auto"></audio>
 
 <script>
 (() => {
@@ -271,6 +302,7 @@
   const slides = document.getElementById('slides');
   const flashEl = document.getElementById('flash');
   const muteBtn = document.getElementById('mute');
+  const endEl = document.getElementById('end');
   const root = document.documentElement;
 
   // ---------- bandeaux ----------
@@ -398,7 +430,7 @@
   }
 
   // ---------- démarrage ----------
-  let started = false;
+  let started = false, slideTimer = 0;
   function start() {
     if (started) return;
     started = true;
@@ -408,9 +440,22 @@
     gate.classList.add('gone');
     setTimeout(() => gate.remove(), 700);
     nextSlide();
-    setInterval(nextSlide, SLIDE_MS);
+    slideTimer = setInterval(nextSlide, SLIDE_MS);
     requestAnimationFrame(loop);
   }
+
+  // ---------- fin du morceau ----------
+  song.addEventListener('ended', () => {
+    clearInterval(slideTimer);
+    endEl.classList.add('on');
+  });
+  endEl.querySelector('button').addEventListener('click', () => {
+    endEl.classList.remove('on');
+    song.currentTime = 0;
+    song.play().catch(() => {});
+    nextSlide();
+    slideTimer = setInterval(nextSlide, SLIDE_MS);
+  });
   gate.addEventListener('click', start);
   addEventListener('keydown', e => { if (!started && (e.key === 'Enter' || e.key === ' ')) start(); });
 
